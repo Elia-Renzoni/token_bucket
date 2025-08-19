@@ -22,7 +22,7 @@ type Node struct {
 	tcpMiddleware *TCPMiddleware
 }
 
-func InitNode(host, port string) *Node {
+func InitNode(host, port string, waiter chan struct{}) *Node {
 	complete, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(host, port))
 	if err != nil {
 		log.Fatal(err.Error())
@@ -31,7 +31,7 @@ func InitNode(host, port string) *Node {
 
 	return &Node{
 		addr:          complete,
-		waiter:        make(chan struct{}),
+		waiter:        waiter,
 		acceptor:      make(chan struct{}),
 		host:          host,
 		port:          port,
@@ -51,6 +51,7 @@ func (n *Node) Bind() {
 
 func (n *Node) Serve() {
 	<-n.acceptor
+	log.Println("Server Listening...")
 
 	for {
 		tcpConn, err := n.ls.AcceptTCP()

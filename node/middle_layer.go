@@ -3,6 +3,7 @@ package node
 import (
 	"net"
 	rl "rlimiter/rate_limiter"
+	"log"
 )
 
 type handler func(net.TCPConn)
@@ -22,6 +23,7 @@ func (t *TCPMiddleware) tokenMiddleware(conn *net.TCPConn, clientProcessor handl
 		if ok := t.rlimiter.TryTakeToken(); !ok {
 			t.drop(conn)
 		} else {
+			log.Println("Packet Forwarded!")
 			clientProcessor(conn)
 		}
 	}
@@ -30,4 +32,5 @@ func (t *TCPMiddleware) tokenMiddleware(conn *net.TCPConn, clientProcessor handl
 func (t *TCPMiddleware) drop(conn net.TCPConn) {
 	conn.Write([]byte("Unvaliable Tokens!"))
 	conn.Close()
+	log.Println("Dropped Packet!")
 }

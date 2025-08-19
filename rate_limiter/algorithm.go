@@ -3,9 +3,13 @@ package ratelimiter
 import (
 	"sync/atomic"
 	"time"
+	"log"
 )
 
-const SIZE int64 = 3000
+const (
+	MAX int64 = 3000
+	MIN int64 = 0
+)
 
 type TokenOwner struct {
 	fillerInterval time.Duration
@@ -15,7 +19,7 @@ type TokenOwner struct {
 
 func InitTokenOwner() *TokenOwner {
 	t := &TokenOwner{
-		fillerInterval: 1 * time.Second,
+		fillerInterval: 10 * time.Second,
 		tokens:         0,
 	}
 
@@ -40,15 +44,16 @@ func (t *TokenOwner) Filler() {
 
 func (t *TokenOwner) push() {
 	currentValue := atomic.LoadInt64(&t.tokens)
-	if currentValue >= SIZE {
+	if currentValue >= MAX {
 		return
 	}
+	log.Println("Add Token!")
 	atomic.AddInt64(&t.tokens, 1)
 }
 
 func (t *TokenOwner) TryTakeToken() bool {
 	tokens := atomic.LoadInt64(&t.tokens)
-	if tokens >= SIZE {
+	if tokens <= MIN {
 		return false
 	}
 	t.takeToken()
